@@ -16,9 +16,9 @@ map_biv_patt <- ggplot(data20) +
   bi_theme() +
   theme(legend.position = "none")
 
-map_biv_patt_color <- ggplot(small) +
+map_biv_patt_color <- ggplot(data20) +
   geom_sf_pattern(aes(pattern = bi_class, pattern_fill = bi_class)) +
-  geom_sf(data = small, mapping = aes(fill = bi_class, alpha = 0.1)) +
+  geom_sf(mapping = aes(fill = bi_class, alpha = 0.1)) +
   bi_scale_fill(pal = "DkBlue", dim = 3) +
   bi_theme() +
   theme(legend.position = "none")
