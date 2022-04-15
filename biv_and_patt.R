@@ -24,14 +24,14 @@ map_biv_patt2 <- ggplot(data20) +
   theme(legend.position = "none")
 
 # pattern and fill by class plus biscale fill
-map_biv_patt_color <- ggplot(data20) +
+map_biv_patt2_color <- ggplot(data20) +
   geom_sf_pattern(aes(pattern = bi_class, pattern_fill = bi_class)) +
   geom_sf(mapping = aes(fill = bi_class, alpha = 0.1)) +
   bi_scale_fill(pal = "DkBlue", dim = 3) +
   bi_theme() +
   theme(legend.position = "none")
 
-maps <- plot_grid(map_biv_patt1, map_biv_patt2, map_biv_patt_color, ncol = 3)
+maps <- plot_grid(map_biv_patt1, map_biv_patt2, map_biv_patt2_color, ncol = 3)
 
 maps
 
