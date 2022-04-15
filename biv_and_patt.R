@@ -11,11 +11,13 @@ data20 <- data %>%
   slice_head(n = 20) %>% 
   mutate(bi_class = as.factor(bi_class))
 
+# ggpattern 
 map_biv_patt <- ggplot(data20) +
   geom_sf_pattern(aes(pattern = bi_class, pattern_fill = bi_class)) +
   bi_theme() +
   theme(legend.position = "none")
 
+# ggpattern and biscale
 map_biv_patt_color <- ggplot(data20) +
   geom_sf_pattern(aes(pattern = bi_class, pattern_fill = bi_class)) +
   geom_sf(mapping = aes(fill = bi_class, alpha = 0.1)) +
@@ -27,4 +29,5 @@ maps <- plot_grid(map_biv_patt, map_biv_patt_color)
 
 maps
 
+ggsave("maps.png", width = 40, height = 20, dpi = 72, units = "cm", device = "png")
 
