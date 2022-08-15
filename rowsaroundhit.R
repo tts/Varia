@@ -8,10 +8,10 @@ my_column <- c(1:3,10,5)
 
 d <- data.frame(column_1, column_2, my_column)
 
-# base R
+# https://stackoverflow.com/a/13155669
 d[which(d$my_column == 10) + c(-1:1), ]
 
-# dplyr
+# https://stackoverflow.com/a/54349439
 library(dplyr)
 d %>% 
   filter( (my_column == 10) | 
