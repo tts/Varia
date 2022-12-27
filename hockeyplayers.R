@@ -1,6 +1,9 @@
 library(tidyverse)
 library(rvest)
 
+# Searching after the answer to touqo's question
+# https://twitter.com/touqo/status/1607440912061444097
+
 url <- "https://fi.wikipedia.org/wiki/Suomen_j%C3%A4%C3%A4kiekkomaajoukkue"
 
 links <- read_html(url) %>% 
