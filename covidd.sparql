@@ -1,0 +1,45 @@
+SELECT (SAMPLE(?countryLabel) AS ?countryOfCitizenship) (SAMPLE(?article) AS ?wp) ?personLabel ?age (GROUP_CONCAT(?occLabel; SEPARATOR=", ") AS ?occupations)
+  WITH {
+    SELECT DISTINCT ?country ?article ?person ?birth_date ?death_date ?occ WHERE {
+      ?person wdt:P31 wd:Q5 ; 
+              p:P569/psv:P569 ?birth_date_node ;
+              p:P570/psv:P570 ?death_date_node ;
+              wdt:P509 wd:Q84263196 ; # death cause is COVID-19
+              wdt:P27 ?country .
+      OPTIONAL { ?person wdt:P106 ?occ. # occupation
+                 ?article schema:about ?person .
+                 {?article schema:isPartOf <https://en.wikipedia.org/> }
+                 UNION
+                 {?article schema:isPartOf <https://fi.wikipedia.org/> }
+                 UNION
+                 {?article schema:isPartOf <https://sv.wikipedia.org/> } 
+                 UNION
+                 {?article schema:isPartOf <https://fr.wikipedia.org/> }
+                 UNION
+                 {?article schema:isPartOf <https://de.wikipedia.org/> }
+                 UNION
+                 {?article schema:isPartOf <https://it.wikipedia.org/> }.}
+      ?birth_date_node wikibase:timeValue ?birth_date .
+      ?death_date_node wikibase:timeValue ?death_date .
+      { ?country wdt:P361 wd:Q52062 } # Nordic countries
+      UNION
+      { ?country wdt:P463 wd:Q458 } # EU
+      UNION
+      { ?country wdt:P17 wd:Q145 } # UK
+      UNION
+      { ?country wdt:P17 wd:Q39 } # Switzerland
+    } 
+   } AS %personsDeadByCovid
+
+   WHERE {
+     INCLUDE %personsDeadByCovid.
+     BIND( year(?death_date) - year(?birth_date) - if(month(?death_date)<month(?birth_date) || (month(?death_date)=month(?birth_date) && day(?death_date)<day(?birth_date)),1,0) as ?age )                                                           
+     SERVICE wikibase:label { 
+       bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".      
+       ?person rdfs:label ?personLabel.
+       ?country rdfs:label ?countryLabel.
+       ?occ rdfs:label ?occLabel 
+      }   
+    }                                                  
+GROUP BY ?wp ?personLabel ?age 
+ORDER BY ?countryOfCitizenship ?age
