@@ -1,4 +1,4 @@
-SELECT (SAMPLE(?countryLabel) AS ?countryOfCitizenship) (SAMPLE(?article) AS ?wp) ?personLabel ?age (GROUP_CONCAT(?occLabel; SEPARATOR=", ") AS ?occupations)
+SELECT (SAMPLE(?countryLabel) AS ?countryOfCitizenship) (SAMPLE(?article) AS ?wikipedia) ?personLabel ?age (SAMPLE(?occLabel) AS ?occupation)
   WITH {
     SELECT DISTINCT ?country ?article ?person ?birth_date ?death_date ?occ WHERE {
       ?person wdt:P31 wd:Q5 ; 
@@ -41,5 +41,5 @@ SELECT (SAMPLE(?countryLabel) AS ?countryOfCitizenship) (SAMPLE(?article) AS ?wp
        ?occ rdfs:label ?occLabel 
       }   
     }                                                  
-GROUP BY ?wp ?personLabel ?age 
+GROUP BY ?wikipedia ?personLabel ?age 
 ORDER BY ?countryOfCitizenship ?age
