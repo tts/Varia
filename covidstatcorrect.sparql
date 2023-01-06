@@ -1,0 +1,29 @@
+SELECT ?countryOfCitizenship (COUNT(?personLabel) AS ?deathsInCovid) (MAX(?ageInDeath) AS ?oldest) (MIN(?ageInDeath) AS ?youngest) WHERE { 
+  SELECT (SAMPLE(?countryLabel) AS ?countryOfCitizenship) ?personLabel (SAMPLE(?age) AS ?ageInDeath) WHERE {
+      SELECT DISTINCT ?countryLabel ?personLabel ?birth_date ?death_date ?age WHERE {
+        ?person wdt:P31 wd:Q5 ; 
+                p:P569/psv:P569 ?birth_date_node ;
+                p:P570/psv:P570 ?death_date_node ;
+                wdt:P509 wd:Q84263196 ; # death cause is COVID-19
+                wdt:P27 ?country .
+        ?birth_date_node wikibase:timeValue ?birth_date .
+        ?death_date_node wikibase:timeValue ?death_date .
+        { ?country wdt:P361 wd:Q52062 } # Nordic countries
+        UNION
+        { ?country wdt:P463 wd:Q458 } # EU
+        UNION
+        { ?country wdt:P17 wd:Q145 } # UK
+        UNION
+        { ?country wdt:P17 wd:Q39 } # Switzerland
+       BIND( year(?death_date) - year(?birth_date) - if(month(?death_date)<month(?birth_date) || (month(?death_date)=month(?birth_date) && day(?death_date)<day(?birth_date)),1,0) as ?age )                                                           
+       SERVICE wikibase:label { 
+         bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".      
+         ?person rdfs:label ?personLabel.
+         ?country rdfs:label ?countryLabel.
+        } # end of SERVICE  
+      } # end of inner subquery
+    } # end of outer subquery 
+    GROUP BY ?personLabel                                                                                               
+  }
+ GROUP BY ?countryOfCitizenship
+ ORDER BY ?countryOfCitizenship
