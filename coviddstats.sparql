@@ -1,3 +1,4 @@
+# Returns some duplicates. For the correct version, see covidstatscorrect.sparql
 SELECT ?countryLabel (MIN(?age) AS ?youngest) (MAX(?age) AS ?oldest) (COUNT(?person) AS ?deathsInCovid)
   WITH {
     SELECT DISTINCT ?country ?person ?birth_date ?death_date WHERE {
