@@ -10,9 +10,6 @@ query_id <- "fmi::observations::lightning::simple&"
 # Helsinki
 query_parms <- "bbox=24.49234,60.07597,25.16979,60.27435&starttime=2023-09-22T00:00:00Z&endtime=2023-09-24T00:00:00Z"
 
-# Finland
-#query_parms <- "bbox=20.065185,59.401565,32.256125,70.231706&starttime=2023-09-23T00:00:00Z&endtime=2023-09-24T00:00:00Z"
-
 # Get data
 url <- httr::modify_url(paste0(base_url, query_id, query_parms))
 resp <- httr::GET(url, ua)
