@@ -1,118 +1,219 @@
 library(tidyverse)
 library(rtoot)
+library(spacyr)
+library(textcat)
 
-# From a number of most active Mastodon instances, search #20books20days,
-# combine, filter unique ids, parse media and its alt tag. 
+# Search toots with the hashtag #20books20days, filter unique ones, 
+# and parse media and its alt tag. Try to find out the most
+# popular authors. 
 # 
-# Try to clean and filter the name of the book.
-# Which are the top titles?
-
-#-----------------------------------------
-# Auth
+# Here, using only the mastodon.social instance. First, the newest 100 toots,
+# and then incrementally with 'since_id' taken from the last toot
+# returned by the previous call.
 #
+# Another strategy would be to choose a couple of the most active instances
+# (by the number of users or by the number of connections) and search 
+# from them.
+
+#---------------------------------------------------------------
 # auth_setup(path = "[working dir]", 
 #            instance = "mastodontti.fi", 
-#            type = "user")
-#-----------------------------------------
-fedi_token <- Sys.getenv("FEDI_INST_KEY") 
+#            type = "user") #perhaps `public` would've been enough?
+#---------------------------------------------------------------
 rtoot_token <- readRDS("rtoot_token.rds")
 token <- rtoot_token$bearer
 
-#-------------------------------------------
-# All instances 
-#
-# 16453 as of writing this
-# 
-# Check: why does fedi_token return "" ?
-#-------------------------------------------
-fed <- get_fedi_instances(n = 0, 
-                          token = "[your token]")
-
-fed_active <- fed %>% 
-  arrange(desc(active_users)) %>% 
-  select(name, users, connections, active_users) %>% 
-  top_n(200)
-
-saveRDS(fed_active, "fed_active.RDS")
-
 #-----------
-# Func
+# Functions
 #-----------
-get_toots <- function(inst){
-  booktoots <- get_timeline_hashtag(hashtag = "20books20days", 
-                                   instance = inst,
-                                   limit = 1000) 
-  return(booktoots)
+
+get_id <- function(df){
+  id <- df %>% 
+    slice_min(id, n = 1) %>% 
+    select(id) %>% 
+    as.character()
+  return(id)
+}
+
+get_toots <- function(inst, id = NULL){
+  toots <- get_timeline_hashtag(hashtag = "20books20days", 
+                                only_media = TRUE,
+                                instance = inst,
+                                limit = 100,
+                                since_id = id, 
+                                token = token) 
+  return(toots)
+}
+
+if_null_na <- function(x){
+  if(is.null(x)) return(NA)
+  x
 }
 
 #------------- 
 # Get toots
 #-------------
 
-# Instance names as a character vector 
-insts <- as.vector(fed_active$name)
+# First call
+toots <- get_toots("mastodon.social")
+last_id <- get_id(toots)
+res_df <- toots
 
-# First just from the biggest instance as a data frame
-fed_active_booktoots <- get_toots(insts[1]) 
-saveRDS(fed_active_booktoots, "mastodon_social_booktoots.RDS")
-fed_active_booktoots <- readRDS("mastodon_social_booktoots.RDS")
+# Subsequent calls
+n <- 101
+i <- 1
 
-# And then the next 19 until 20 as a list
-insts_therest <- insts[2:20]
-toots_list <- map(.x = insts_therest, 
-                  .f = purrr::possibly(get_toots, otherwise = NA),
-                  .progress = TRUE)
+while (i < n) {
+  toots <- get_toots("mastodon.social", last_id)
+  res_df <- bind_rows(res_df, toots)
+  last_id <- get_id(toots)
+  i <- i + 1
+}
 
-toots_list_no_na <- toots_list[!sapply(toots_list, function(x) all(is.na(x)))]
+# That was terminated when there were 6574 toots
+saveRDS(res_df, "booktoots.RDS")
 
-saveRDS(toots_list_no_na, "toots_list_fedi_2to20.RDS")
-toots_list <- readRDS("toots_list_fedi_2to20.RDS")
+# The next day I tried first to fetch potential remaining toots with the last since_id param
+# from the earlier fetch, but got a persistent 503 error code. 
+# Instead, left that param out but increased the limit to 10000.
+# That yielded only 6594, probably because of timeout.
 
 #-------------------------
 # Pick media elements
 #-------------------------
 
-out <- map_df(.x = toots_list,
-             .f = ~ {
-               tibble(id = .x$id,
-                      media_attachments = .x$media_attachments)
-             })
+out <- res_df %>% 
+  select(id, uri, media_attachments) %>% 
+  distinct(uri, .keep_all = TRUE) 
 
-out2 <- fed_active_booktoots %>% 
-  select(id, media_attachments)
-
-toots_df <- rbind(out, out2)
-toots_df <- toots_df %>% 
-  distinct(id, .keep_all = TRUE) # no duplicates (?)
-
-media <- toots_df[, "media_attachments"]
+media <- out[, "media_attachments"]
 media2 <- media %>% 
   filter(lengths(media_attachments) > 0)
 allmedia <- bind_rows(media2$media_attachments)
-alts <- distinct(allmedia, id, .keep_all = TRUE) %>% 
+
+alts <- distinct(allmedia, remote_url, .keep_all = TRUE) %>% 
   filter(!is.na(description)) %>% 
   select(description)
-saveRDS(alts, "toots_alts.RDS") # 19141
-
-# Am I right that the toot ID is not unique
-# across federated toots? When the alts are sorted,
-# there are exactly similar ones, which implies that
-# they are indeed from the same original toot.
+saveRDS(alts, "booktoots_alts.RDS") 
 
 alts <- alts %>% 
-  distinct(description) %>% # 5165
-  filter(description != "")
-saveRDS(alts, "toots_alts_unique.RDS")
+  distinct(description) %>% 
+  filter(description != "") # 5323 distinct ones
+saveRDS(alts, "booktoots_alts_unique.RDS")
 
-#-----------------------
-# Tokenize to words
-# and try to parse names
+alts <- readRDS("booktoots_alts_unique.RDS")
+
+rm(res_df, out, allmedia, media, media2)
+gc()
+
+#--------------------------------------------
+# Language detection. 
+# Trying the three most visible ones (to me)
+#--------------------------------------------
+langs <- c("english", "german", "finnish")
+my.profiles <- TC_byte_profiles[names(TC_byte_profiles) %in% langs]
+
+# But - is this really necessary? After all, I want to parse ALL person
+# entities regardless of the lang of the alt text. In other words, even though
+# the alt text is, say, in Finnish, there do exists e.g. English author names.
+# As long as Finnish (and other) person names are captured, I'm fine.
+# That said, German might be a problem because it capitalizes all nouns,
+# so parsing them separately.
+
+alts <- alts %>% 
+  mutate(lang = textcat(description, p = my.profiles))
+
+#----------------------------------------------------------
+# Person entity detection with all other langs but german.
+# This is by no means faultless but will do here. 
+#----------------------------------------------------------
+spacy_initialize()
+
+p_ent <- alts %>% 
+  filter(lang != "german") %>% 
+  pull(description) %>% 
+  spacy_extract_entity() %>% 
+  filter(ent_type == "PERSON")
+
+#----------------
+# and then german
+#-----------------
+spacy_finalize()
+spacy_initialize(model = "de_core_news_lg")
+
+p_ent_ge <- alts %>% 
+  filter(lang == "german") %>% 
+  pull(description) %>% 
+  spacy_extract_entity() %>% 
+  filter(ent_type == "PER")
+
+#----------------------------------------
+# Trying to find similar names with 'agrep'
+# which uses the Levenshtein algorithm.
+#----------------------------------------
+person <- bind_rows(p_ent, p_ent_ge)
+
+t <- as.vector(person$text)
+
+groups <- list()
+i <- 1
+while(length(t) > 0)
+{
+  id <- agrep(t[1], t, ignore.case = TRUE, max.distance = 0.2)
+  groups[[i]] <- t[id]
+  t <- t[-id]
+  i <- i + 1
+}
+
+# From a list of character vectors to a data frame
+df <- groups %>% 
+  transpose() %>% 
+  map(~map(.x, if_null_na)) %>% 
+  map(unlist) %>% 
+  as_tibble(.name_repair = "unique")
+
+saveRDS(df, "booktoot_similar_names.RDS")
+
+# Looking at the rows with max (4) mentions.
+# 91 cases.
+df_top <- df %>% 
+  rename(c1 = `...1`,
+         c2 = `...2`,
+         c3 = `...3`,
+         c4 = `...4`) %>% 
+  filter(complete.cases(.))
+
+#-----------------------------------
+# Manually checking all these
+# by sorting by the first column
+# and then just by looking which
+# indeed refer to the same name.
+# 20+ found.
+#-----------------------------------
 #
-# TODO
-#------------------------
-
-
-
-
-
+# Angela Carter
+# Barbara Kingsolver
+# Brian W. Kernighan
+# Carl Sagan
+# Douglas Adams
+# Edgar Rice Burroughs
+# Franz Kafka
+# Fyodor Dostoyevsky
+# Gabriel Garcia Marquez
+# George Orwell
+# Frank Herbert
+# Isaac Asimov
+# Jean-Paul Sartre
+# John Steinbeck
+# Lewis Carroll
+# Michael Crichton
+# Neal Stephenson
+# Neil Gaiman
+# Oliver Sacks
+# Orson Scott Card
+# Robert Graves
+# Stephen Jay Gould
+# Stephen King
+# Suzanne Collins
+# Tove Jansson
 
