@@ -165,8 +165,16 @@ while(length(t) > 0)
   i <- i + 1
 }
 
+# For an unknown reason, some vectors are exceptionally long, containing multiple
+# seemingly unrelated names. Getting rid of them for now.
+# Note also that in 'transpose()' below, the 1st element is used as a template 
+# so it better be the longest one
+groups_s <- groups[lengths(groups) <= 50]
+len <- sapply(groups_s, length)
+groups_s_sorted <- groups_s[order(len, decreasing = TRUE)]
+
 # From a list of character vectors to a data frame
-df <- groups %>% 
+df <- groups_s_sorted %>% 
   transpose() %>% 
   map(~map(.x, if_null_na)) %>% 
   map(unlist) %>% 
@@ -174,21 +182,20 @@ df <- groups %>%
 
 saveRDS(df, "booktoot_similar_names.RDS")
 
-# Looking at the rows with max (4) mentions.
-# 91 cases.
+# Looking at the first ~100 rows shows that
+# the most popular names get >30 mentions
+# and then the popularity decreases rapidly.
+# Filtering down to those rows where there are
+# at least 5 mentions.
 df_top <- df %>% 
-  rename(c1 = `...1`,
-         c2 = `...2`,
-         c3 = `...3`,
-         c4 = `...4`) %>% 
-  filter(complete.cases(.))
+  rename(c5 = `...5`) %>% 
+  filter(complete.cases(c5))
 
 #-----------------------------------
 # Manually checking all these
 # by sorting by the first column
 # and then just by looking which
 # indeed refer to the same name.
-# 20+ found.
 #-----------------------------------
 #
 # Angela Carter
