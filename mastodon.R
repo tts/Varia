@@ -45,6 +45,14 @@ get_toots <- function(inst, id = NULL){
   return(toots)
 }
 
+fetch_and_extract_id <- function(inst, last_id = NULL) {
+  toots <- get_toots(inst, id = last_id)
+  list(
+    toots = toots,
+    last_id = get_id(toots)
+  )
+}
+
 if_null_na <- function(x){
   if(is.null(x)) return(NA)
   x
@@ -54,21 +62,27 @@ if_null_na <- function(x){
 # Get toots
 #-------------
 
-# First call
-toots <- get_toots("mastodon.social")
-last_id <- get_id(toots)
-res_df <- toots
+# Number of iterations
+n <- 100
 
-# Subsequent calls
-n <- 101
-i <- 1
+# Initialize the process
+initial_result <- fetch_and_extract_id("mastodon.social")
+res_df <- initial_result$toots
+last_id <- initial_result$last_id
 
-while (i < n) {
-  toots <- get_toots("mastodon.social", last_id)
-  res_df <- bind_rows(res_df, toots)
-  last_id <- get_id(toots)
-  i <- i + 1
-}
+# Perform iterations
+results <- accumulate(
+  seq_len(n - 1),
+  ~ {
+    fetch_result <- fetch_and_extract_id("mastodon.social", last_id)
+    last_id <<- fetch_result$last_id
+    bind_rows(.x, fetch_result$toots)
+  },
+  .init = res_df
+)
+
+# Combine all results into a single data frame
+res_df <- results[[length(results)]]
 
 # That was terminated when there were 6574 toots
 saveRDS(res_df, "booktoots.RDS")
