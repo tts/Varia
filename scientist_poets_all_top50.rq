@@ -9,9 +9,9 @@ SELECT ?country ?countryLabel
       FILTER(NOT EXISTS { ?country wdt:P31 wd:Q3024240. }) #historical country
       FILTER(NOT EXISTS { ?country wdt:P31 wd:Q28171280. }) #ancient civilization
       FILTER(NOT EXISTS { ?country wdt:P31 wd:Q747074. }) #commune of Italy
-      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q3549.}) # trying to exclude Sibenik, to no avail. Bug of some sort.
+      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q3549.}) # trying to exclude Sibenik, to no avail. Bug of some sort?
+      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q59975.}) # ditto Béjaïa 
     }
-    # choose “random but deterministic” color per order; you can play around with "-" (can be any string) 
     GROUP BY ?country
   }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
