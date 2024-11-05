@@ -7,10 +7,10 @@ SELECT ?country ?countryLabel
         (wdt:P106/(wdt:P279*)) wd:Q901, wd:Q49757; #occupation scientist or poet
         wdt:P27 ?country.
       FILTER(NOT EXISTS { ?country wdt:P31 wd:Q3024240. }) #historical country
-      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q28171280. }) #ancient civilization
-      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q747074. }) #commune of Italy
-      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q3549.}) # trying to exclude Sibenik, to no avail. Bug of some sort?
-      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q59975.}) # ditto Béjaïa 
+      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q28171280. }) # ancient civilization (to exclude ancient Egypt)
+      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q747074. }) # commune of Italy
+      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q15105893.}) # town in Croatia (to exclude Sibenik)
+      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q2989398.}) # commune of Algeria (to exclude Béjaïa)
     }
     GROUP BY ?country
   }
