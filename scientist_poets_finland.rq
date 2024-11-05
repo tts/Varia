@@ -1,0 +1,24 @@
+SELECT DISTINCT ?person ?personLabel (YEAR(?dateOfBirth) AS ?yearOfBirth) (YEAR(?dateOfDeath) AS ?yearOfDeath) ?description ?article
+WHERE
+{
+  ?person wdt:P31 wd:Q5 ;
+          wdt:P106/wdt:P279* wd:Q901, wd:Q49757 ;
+          wdt:P27 wd:Q33 ;
+          wdt:P569 ?dateOfBirth. hint:Prior hint:rangeSafe true.
+  OPTIONAL { 
+     ?person wdt:P570 ?dateOfDeath. hint:Prior hint:rangeSafe true.
+  }
+  OPTIONAL { 
+    ?person schema:description ?description
+  }
+  OPTIONAL {
+    ?article schema:about ?person .
+    ?article schema:inLanguage "fi" .
+    ?article schema:isPartOf <https://fi.wikipedia.org/> .
+  }
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".
+    }
+  FILTER(LANG(?description) = "fi")
+  }
+ORDER BY ?yearOfBirth

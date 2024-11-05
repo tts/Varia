@@ -1,0 +1,23 @@
+SELECT ?country ?countryLabel 
+       ?population ?scientist_poets ((100  * ?scientist_poets / ?population) AS ?share_in_population) WHERE {
+  ?country wdt:P1082 ?population.
+  {
+    SELECT ?country (COUNT(DISTINCT ?person) AS ?scientist_poets) WHERE {
+      ?person wdt:P31 wd:Q5;
+        (wdt:P106/(wdt:P279*)) wd:Q901, wd:Q49757; #occupation scientist or poet
+        wdt:P27 ?country.
+      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q3024240. }) #historical country
+      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q28171280. }) #ancient civilization
+      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q747074. }) #commune of Italy
+      FILTER(NOT EXISTS { ?country wdt:P31 wd:Q3549.}) # trying to exclude Sibenik, to no avail. Bug of some sort.
+    }
+    # choose “random but deterministic” color per order; you can play around with "-" (can be any string) 
+    GROUP BY ?country
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
+ORDER BY DESC (?share_in_population)
+LIMIT 50
+
+# On choosing RGB with #defaultView:BubbleChart see eg
+# https://github.com/kmetz/datenpumpe/blob/1f3a73c5ac9b33dfdf0397774975add83f8921ca/datenpumpe-server/queries.php#L455
