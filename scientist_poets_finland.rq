@@ -1,15 +1,26 @@
-SELECT DISTINCT ?person ?personLabel (YEAR(?dateOfBirth) AS ?yearOfBirth) (YEAR(?dateOfDeath) AS ?yearOfDeath) ?description ?article
+SELECT DISTINCT ?person ?personLabel (YEAR(?dob) AS ?yearOfBirth) (YEAR(?dod) AS ?yearOfDeath) ?description_fi ?description_sv ?article
 WHERE
 {
   ?person wdt:P31 wd:Q5 ;
           wdt:P106/wdt:P279* wd:Q901, wd:Q49757 ;
           wdt:P27 wd:Q33 ;
-          wdt:P569 ?dateOfBirth. hint:Prior hint:rangeSafe true.
+          wdt:P569 ?dateOfBirth. 
+  hint:Prior hint:rangeSafe true.
+  BIND(xsd:dateTime(?dateOfBirth) AS ?dob)
   OPTIONAL { 
-     ?person wdt:P570 ?dateOfDeath. hint:Prior hint:rangeSafe true.
+     ?person wdt:P570 ?dateOfDeath .
+     hint:Prior hint:rangeSafe true.
+     BIND(xsd:dateTime(?dateOfDeath) AS ?dod)
   }
   OPTIONAL { 
     ?person schema:description ?description
+    FILTER(LANG(?description) = "fi")
+    BIND(?description AS ?description_fi)
+  }
+  OPTIONAL { 
+    ?person schema:description ?description
+    FILTER(LANG(?description) = "sv")
+    BIND(?description AS ?description_sv)
   }
   OPTIONAL {
     ?article schema:about ?person .
@@ -19,6 +30,5 @@ WHERE
   SERVICE wikibase:label { 
     bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".
     }
-  FILTER(LANG(?description) = "fi")
   }
 ORDER BY ?yearOfBirth
