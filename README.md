@@ -18,6 +18,6 @@
 
 * [Adding items to Wikidata: Finnish people with the honorary title 'vuorineuvos'](https://github.com/tts/Varia/blob/main/vuorineuvos.R)
 
-* [Wikidata SPARQL query on Finnish scientist who were/are also poets](https://github.com/tts/Varia/blob/main/scientist_poets_finland.rq)
+* [Wikidata SPARQL query on Finnish scientists who were/are also poets ordered by the year of birth](https://github.com/tts/Varia/blob/main/scientist_poets_finland.rq)
 
 * [Wikidata SPARQL query on Top 50 countries of today with the most scientist-poets in proportion of the number of citizens](https://github.com/tts/Varia/blob/main/scientist_poets_all_top50.rq)
