@@ -1,0 +1,23 @@
+# All religious buildings in Finland with the name (or also known as) Pyhän Laurin kirkko.
+# To leave out unnecessary points of the same building, reduce the number of decimal digits and
+# construct the geo literal manually for the defaultView:Map
+#defaultView:Map
+SELECT DISTINCT ?item ?coord WHERE {
+  ?item (wdt:P31/(wdt:P279*)) wd:Q24398318;
+  wdt:P17 wd:Q33;
+  p:P625 ?coordinate.
+  {
+    ?item rdfs:label ?itemLabel.
+    FILTER(CONTAINS(?itemLabel, "Pyhän Laurin kirkko"@fi))
+  }
+  UNION
+  {
+    ?item skos:altLabel ?altLabel.
+    FILTER(CONTAINS(?altLabel, "Pyhän Laurin kirkko"@fi))
+  }
+  ?coordinate psv:P625 ?coordinate_node.
+  ?coordinate_node wikibase:geoLongitude ?lon;
+  wikibase:geoLatitude ?lat.
+  BIND(CONCAT("POINT(", STR((ROUND(?lon * 1000 )) / 1000 ), " ", STR((ROUND(?lat * 1000 )) / 1000 ), ")") AS ?point)
+  BIND(STRDT(?point, geo:wktLiteral) AS ?coord)
+}
