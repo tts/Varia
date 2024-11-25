@@ -20,4 +20,6 @@
 
 * [Wikidata SPARQL query on Finnish scientists who were/are also poets ordered by the year of birth](https://github.com/tts/Varia/blob/main/scientist_poets_finland.rq)
 
-* [Wikidata SPARQL query on Top 50 countries of today with the most scientist-poets in proportion of the number of citizens](https://github.com/tts/Varia/blob/main/scientist_poets_all_top50.rq)
+* [Wikidata SPARQL query on the Top 50 countries of today with the most scientist-poets in proportion of the number of citizens](https://github.com/tts/Varia/blob/main/scientist_poets_all_top50.rq)
+
+* [Wikidata SPARQL query on religious buildings in Finland with the name (or Also Known As) Pyhän Laurin kirkko](https://github.com/tts/Varia/blob/main/pyhanlaurinkirkko.rq)
